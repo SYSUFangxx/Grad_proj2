@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/backup/20200412（1_23+yhfy_19new）/log_my_po-calc_weight20200412.log" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/backup/20200412（1_23+yhfy_19new）/my_po-calc_weight/HS300/my_po/trades.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/backup/gc123/my_po-calc_weight/HS300/my_po/trades.csv" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/backup/res-my_po/res_neu/HS300/my_po/trades.csv" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/backup/res20200424-other/my_po/HS300/my_po/trades.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/data/analysis/calc_weight-HS300-ind_res.csv" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/data/gc_select/SZ50_18_industry.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/data/index_weight/HS300/2018-01-02.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/data/index_weight/HS300/2018-12-03.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/data/index_weight/HS300/2018-12-28.csv" charset="GBK" />
@@ -12,11 +17,11 @@
     <file url="file://$PROJECT_DIR$/data/index_weight/ZZ500/2017-05-31.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/data/industry/industry_sw1.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/data/industry/industry_sw1_one_hot.csv" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/data/lncap_and_industry/2016-01-08.csv" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/data/lncap_and_industry/2018-01-02.csv" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/data/lncap_and_industry/2018-01-04.csv" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/data/lncap_and_industry/2018-06-01.csv" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/data/ret/ret_17week.csv" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/data/stocks/all_a_stocks.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/res/backtest/my_po-calc_weight/HS300/my_po/trades.csv" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/res/backtest/my_po/HS300/my_po/trades.csv" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/res/log_time/log_my_po-calc_weight20200412.log" charset="GBK" />
     <file url="file://$PROJECT_DIR$/res/log_time/log_scipy.log" charset="GBK" />
     <file url="file://$PROJECT_DIR$/res/paper_datas/neu_vs_expo.csv" charset="GBK" />
   </component>

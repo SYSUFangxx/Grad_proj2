@@ -2,7 +2,6 @@ from rqalpha.api import *
 import pandas as pd
 import os
 
-from src.my_calculator import record_to_str_eval
 from src.my_calculator import MyCalculator, OptTool
 from const.special_codes import *
 from const.benchmark import *
@@ -31,6 +30,8 @@ def init(context):
     # context.close_df = pd.read_csv('../data/allA_data/allAclose.csv', index_col=0)
     # context.close_df.columns = change_code_format_to_long(list(context.close_df.columns))
     # context.ret_df = context.close_df.pct_change().shift(-1)
+    context.df_ret = pd.read_csv(data_root + '../data/ret/ret_weekly.csv', index_col=0)
+    context.df_ret = context.df_ret.shift(-1)
     context.bench_root = get_ben_root(context.config.base.benchmark)
     scheduler.run_weekly(trade, tradingday=1)
 
@@ -113,6 +114,9 @@ def trade(context, bar_dict):
     index_good_stock = list(set(good_stocks) & set(df_X.index) - set(exclude_stocks))
     s_ret[index_good_stock] = 0.01
     ret_all = s_ret[all_stocks].values
+
+    # """ 使用周收益率作为预测 """
+    # ret_all = context.df_ret[all_stocks].loc[date_data].fillna(0).values
 
     config = {
             "w_o": pos_all,

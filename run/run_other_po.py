@@ -3,24 +3,23 @@ from const.benchmark import BENCHMARK
 from src.my_calculator import check_root
 import os
 
-# s_date = "2016-01-08"
 s_date = "2017-01-01"
-# e_date = "2018-01-01"
 e_date = "2020-01-01"
+other_pos = ['bh', 'ubh', 'cr', 'semi_cr', 'eg', 'olu', 'olmar', 'rmr', 'sspo']
+have_run = ['bh', 'ubh', 'cr', 'semi_cr', 'eg', 'olu', 'rmr', 'sspo']
 
-strategys = ['bh', 'cr', 'ubh', 'semi_cr']
-# strategys = ['eg', 'olu', 'olmar', 'sspo', 'rmr']
-# strategys = ['eg']
-# strategys = ['sspo']
-# strategys = ['olu']
+for po in other_pos:
+    if po in have_run:
+        continue
 
-for ist in strategys:
-    strategy_path = "../src/%s.py" % ist
-
-    check_root('../res/backtest/%s' % ist)
+    strategy_path = "../src/%s.py" % po
+    check_root('../res/backtest/%s' % po)
 
     for benchmark, ben_code in BENCHMARK.items():
-        res_root = '../res/backtest/%s/%s' % (ist, benchmark)
+        # if benchmark == 'HS300': continue
+        print('Algorithm:\t', po, 'a\tBenchmark:\t', benchmark)
+
+        res_root = '../res/backtest/%s/%s' % (po, benchmark)
         check_root(res_root)
 
         config = {

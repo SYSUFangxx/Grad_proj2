@@ -1,3 +1,5 @@
+import os
+
 from rqalpha.api import *
 import pandas as pd
 import numpy as np
@@ -10,15 +12,13 @@ from const.benchmark import BENCHMARK
 # 去除股票
 exclude_stocks = EXCLUDE_STOCKS
 # 货币基金
-moneyFund = '510880.XSHG'
+moneyFund = MONEY_FUND
 # 存储数据路径
 data_root = "../data/"
 
-# @assistant function
-#  return the format of rqalpha
+
 def change_code_format_to_long(stocks):
     stocks = [s.replace('SH', 'XSHG') for s in stocks]
-    stocks = [s.replace('XXSHGG', 'XSHG') for s in stocks]
     stocks = [s.replace('SZ', 'XSHE') for s in stocks]
     return stocks
 
@@ -50,7 +50,8 @@ def adjust_weights_to_pos(w):
 def init(context):
     context.init_flag = True
     context.bench_root = get_ben_root(context.config.base.benchmark)
-    context.close_df = pd.read_csv('../data/allA_data/allAclose.csv', index_col=0)
+    context.close_df = pd.read_csv('../data/stocks/all_a_close_rqalpha.csv', index_col=0)
+    context.close_df.columns = change_code_format_to_long(context.close_df.columns)
     scheduler.run_weekly(trade, tradingday=1)
 
 
@@ -62,31 +63,28 @@ def trade(context, bar_dict):
     position_stocks = list(context.portfolio.positions.keys())
 
     ''' 获取基准成分股，用于生成总股池和基准权重，即all_stocks和list_ben_w '''
-    file = data_root + 'index_weight/%s/%s.csv' % (context.bench_root, date_data)
-    df_ben = pd.read_csv(file, encoding='gbk', usecols=['code', 'i_weight'])
-    ben_stocks = df_ben['code'].tolist()
+    index_file_csv = sorted([p for p in os.listdir(data_root + 'index_weight/%s' % context.bench_root)
+                             if p.split('.')[0] <= date_data]
+                            )[-1]   # 取小于等于date_data的最大日期文件
+    file = data_root + 'index_weight/%s/%s' % (context.bench_root, index_file_csv)
+    df_ben = pd.read_csv(file, encoding='gbk', usecols=['con_code', 'weight'])
+    df_ben['con_code'] = change_code_format_to_long(df_ben['con_code'])
+    ben_stocks = df_ben['con_code'].tolist()
 
     all_stocks = ben_stocks + [s for s in position_stocks if s not in ben_stocks]
 
     p = context.close_df.loc[:date_data, all_stocks].iloc[-5:]
     x_t = p.iloc[-1] / p.iloc[-2]
-    x_t[[s for s in GOOD_CODES if s in all_stocks]] = 1.1
+
+    """采用good_codes计算未来收益"""
+    good_codes = change_code_format_to_long(GOOD_CODES)
+    x_t[[s for s in x_t.index if s in good_codes]] = 1.01
+    x_t[[s for s in x_t.index if s not in good_codes]] = 0.99
+
     x_t = x_t.dropna()
     x_t[moneyFund] = 1.00012
-    x_t.index = change_code_format_to_long(x_t.index)
 
-    '''采用my_po的good_codes'''
-    # good_codes = GOOD_CODES
-    # good_codes = change_code_format_to_long(good_codes)
-    # pred_fix = pd.Series([0]*x_t.size, index=x_t.index)
-    # pred_fix = pred_fix.apply(lambda x: 1.01 if x in good_codes else 0.99)
-    # x_t = pred_fix
-    '''采用my_po的good_codes'''
-
-    drop_stocks = []
-    for s in exclude_stocks:
-        if s in x_t.index:
-            drop_stocks.append(s)
+    drop_stocks = [s for s in exclude_stocks if s in x_t.index]
     x_t = x_t.drop(drop_stocks)
 
     w_o = []
@@ -107,11 +105,12 @@ def trade(context, bar_dict):
     # print("Nonzero w_o", [w for w in w_o if w])
     # print("x_t", x_t.values)
 
-    if context.init_flag or np.sum(w_o):
+    if context.init_flag:
         weights = np.ones(len(po_stocks)) / len(po_stocks)
         context.init_flag = False
     else:
-        weights = ReferPO.olu(po_inputs)
+        # weights = ReferPO.olu(po_inputs)
+        weights = ReferPO.olu_cvxpy(po_inputs)
 
     print("Nonzero weights", [w for w in weights if w])
 

@@ -51,7 +51,7 @@ def adjust_weights_to_pos(w):
 def init(context):
     context.init_flag = True
     context.bench_root = get_ben_root(context.config.base.benchmark)
-    scheduler.run_weekly(trade, tradingday=1)
+    scheduler.run_monthly(trade, tradingday=1)
 
 
 def trade(context, bar_dict):

@@ -10,8 +10,9 @@ class MY_PO_PARAMS:
     # CALC_METHOD = "calc_weight_with_exposure"
 
     ''' 已有的优化工具 '''
-    CALC_METHOD = "cvxpy_neu"
-    # CALC_METHOD = "cvxpy_with_exposure"
+    # CALC_METHOD = "cvxpy_without_risk_control"
+    # CALC_METHOD = "cvxpy_neu"
+    CALC_METHOD = "cvxpy_with_exposure"
     # CALC_METHOD = "SciOpt_neu"
 
     def to_str(self):

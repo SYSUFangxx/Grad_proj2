@@ -9,8 +9,33 @@ class TSData:
         pass
 
     def get_all_a_stocks(self):
-        df_stk = self.pro.stock_basic(exchange='', fields='ts_code,symbol,name,fullname,area,industry,exchange,list_date,delist_date')
-        return df_stk.ts_code.tolist()
+        df_stk = self.pro.stock_basic(is_hs='N', list_status='L', exchange='', fields='ts_code,symbol,name,fullname,area,industry,exchange,list_date,delist_date')
+        return df_stk[['ts_code', 'name', 'list_date', 'delist_date']]
+
+    def get_all_a_stock_close(self):
+        """
+        获取全部A股的收盘价，但是与rqalpha的数据对比检查，发现数据质量不是特别好，建议采用rqalpha的收盘价数据。
+        :return: 无。对应结果直接写入 "./data/stocks/all_a_close_tushare"
+        """
+        df_stk = self.get_all_a_stocks()
+        df_res = pd.DataFrame()
+        for id, row in df_stk.iterrows():
+            stk = row['ts_code']
+            print(stk, id, df_stk.shape[1])
+
+            list_date = row['list_date']
+            delist_date = row['delist_date']
+            if list_date > '20200101' or (delist_date is not None and delist_date < '20160101'):
+                continue
+
+            st_date = list_date if list_date >= '20160101' else '20160101'
+            end_date = delist_date if delist_date is not None and delist_date <= '20200101' else '20200101'
+            df_stk = ts.pro_bar(ts_code=stk, adj='qfq', start_date=st_date, end_date=end_date)
+            df_stk.index = df_stk.trade_date
+            s_stk = df_stk['close']
+            s_stk.name = stk
+            df_res = pd.concat([df_res, s_stk], axis=1)
+        return df_res
 
     def get_indexes_weight(self, start_date=20160101, end_date=20200101, res_root='../data/index_weight/'):
         """
@@ -88,11 +113,19 @@ class TSData:
 if __name__ == '__main__':
     ts_data = TSData()
 
+    # 获取所有的A股数据
+    df = ts_data.get_all_a_stocks()
+    df.to_csv('../data/stocks/all_a_stocks.csv', index=False)
+
     # # 获取指数权重数据
     # ts_data.get_indexes_weight()
 
     # # 获取股票的市值信息
     # ts_data.get_market_value()
 
-    # 获取申万一级行业分类
-    ts_data.get_sw_industry()
+    # # 获取申万一级行业分类
+    # ts_data.get_sw_industry()
+
+    # 获取所有A股的2016年以来的收盘价
+    df = ts_data.get_all_a_stock_close()
+    df.to_csv('../data/stocks/all_a_close_tushare.csv')

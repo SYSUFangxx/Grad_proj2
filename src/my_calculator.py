@@ -397,7 +397,7 @@ class MyCalculator:
                 loss = c * total - p2
                 print('iter {} loss {} cost {} return {} risk_expro {}'.format(T, loss, total, p2, p3 * p3))
 
-        print(f"Time Cost: calc_weight\t{start}\t{time.time() - start}\t{((time.time() - start) / T)}")
+        print(f"Time Cost: calc_weight_with_exposure\t{start}\t{time.time() - start}\t{((time.time() - start) / T)}")
         return w
 
 
@@ -481,6 +481,9 @@ class OptTool:
         prob = cp.Problem(obj_fun, cons)
 
         # 问题求解
+        print(prob.is_dcp())
+        # print(config)
+        # prob.solve(verbose=True)
         prob.solve()
 
         print("status:", prob.status)
@@ -523,6 +526,48 @@ class OptTool:
         prob = cp.Problem(obj_fun, cons)
 
         # 问题求解
+        prob.solve()
+
+        print("status:", prob.status)
+        print(f"optimal value {prob.value}")
+        print(f"optimal variable, w={w.value}")
+        # print(res.x)
+        print(time.time() - start)
+
+        return w.value
+
+    @staticmethod
+    def cvxpy_without_risk_control(config):
+
+        # 原始参数：w_o, w_b, r, X, upper=0.02, c=0.006, l=100
+        start = time.time()
+
+        # 定义变量
+        w_t = config["w_o"]
+        r = config["r"]
+        X = config["X"]
+        w_b = config["w_b"]
+        upper = config["upper"]
+        l = config["l"]
+        c = config["c"]
+        m = len(w_t)  # 股票数
+
+        w = cp.Variable(m)
+        # print(f"w:{w},r:{r},w_t:{w_t},l:{l},w_b:{w_b},X:{X}")
+        obj_fun = cp.Minimize(- w @ r + c * cp.norm(w - w_t, 1))
+
+        # 约束条件，包括等式约束和不等式约束
+        cons = [w >= 0,
+                upper - w >= 0,
+                w @ np.ones(m) == 1]
+
+        # 把目标函数与约束传进Problem函数中
+        prob = cp.Problem(obj_fun, cons)
+
+        # 问题求解
+        print(prob.is_dcp())
+        # print(config)
+        # prob.solve(verbose=True)
         prob.solve()
 
         print("status:", prob.status)

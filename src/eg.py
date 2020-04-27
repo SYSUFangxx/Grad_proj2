@@ -1,3 +1,5 @@
+import os
+
 from rqalpha.api import *
 import pandas as pd
 import numpy as np
@@ -50,7 +52,7 @@ def adjust_weights_to_pos(w):
 def init(context):
     context.init_flag = True
     context.bench_root = get_ben_root(context.config.base.benchmark)
-    context.close_df = pd.read_csv('../data/allA_data/allAclose.csv', index_col=0)
+    context.close_df = pd.read_csv('../data/stocks/all_a_close_rqalpha.csv', index_col=0)
     scheduler.run_weekly(trade, tradingday=1)
 
 
@@ -62,9 +64,12 @@ def trade(context, bar_dict):
     position_stocks = list(context.portfolio.positions.keys())
 
     ''' 获取基准成分股，用于生成总股池和基准权重，即all_stocks和list_ben_w '''
-    file = data_root + 'index_weight/%s/%s.csv' % (context.bench_root, date_data)
-    df_ben = pd.read_csv(file, encoding='gbk', usecols=['code', 'i_weight'])
-    ben_stocks = df_ben['code'].tolist()
+    index_file_csv = sorted([p for p in os.listdir(data_root + 'index_weight/%s' % context.bench_root)
+                             if p.split('.')[0] <= date_data]
+                            )[-1]   # 取小于等于date_data的最大日期文件
+    file = data_root + 'index_weight/%s/%s' % (context.bench_root, index_file_csv)
+    df_ben = pd.read_csv(file, encoding='gbk', usecols=['con_code', 'weight'])
+    ben_stocks = df_ben['con_code'].tolist()
 
     all_stocks = ben_stocks + [s for s in position_stocks if s not in ben_stocks]
 
@@ -75,17 +80,14 @@ def trade(context, bar_dict):
     x_t.index = change_code_format_to_long(x_t.index)
 
     '''采用my_po的good_codes'''
-    # good_codes = GOOD_CODES
+    # good_codes = set(GOOD_CODES)
     # good_codes = change_code_format_to_long(good_codes)
     # pred_fix = pd.Series([0]*x_t.size, index=x_t.index)
     # pred_fix = pred_fix.apply(lambda x: 1.01 if x in good_codes else 0.99)
     # x_t = pred_fix
     '''采用my_po的good_codes'''
 
-    drop_stocks = []
-    for s in exclude_stocks:
-        if s in x_t.index:
-            drop_stocks.append(s)
+    drop_stocks = [s for s in exclude_stocks if s in x_t.index]
     x_t = x_t.drop(drop_stocks)
 
     w_o = []

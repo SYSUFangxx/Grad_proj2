@@ -44,6 +44,29 @@ class ReferPO:
         pass
 
     @staticmethod
+    def eg(inputs):
+        # get inputs
+        eta = 0.05
+        x_t = inputs['x_t']
+        w_o = inputs['w_o']
+        if np.dot(w_o, x_t):
+            theta_t = x_t / np.dot(w_o, x_t)
+            w = w_o * np.exp(eta * theta_t)
+            return w
+        else:
+            return np.ones_like(w_o) / w_o.size
+
+    @staticmethod
+    def pamr(inputs):
+        # get inputs
+        eps = 0.5
+        x_t = inputs['x_t']
+        w_o = inputs['w_o']
+        tau = max(0.0, np.dot(w_o * x_t) - eps / np.linalg.norm(x_t - np.mean(x_t)))
+        w = w_o - tau * (x_t - np.mean(x_t))
+        return w
+
+    @staticmethod
     def olu(inputs):
         """
         paper: Online Lazy Updates for Portfolio Selection with Transaction Costs
@@ -119,6 +142,52 @@ class ReferPO:
                                                                    np.linalg.norm(np.sum(w) - 1)))
 
         return w
+
+    @staticmethod
+    def olu_cvxpy(inputs):
+        """
+        该函数采用cvxpy实现：但是具体实现过程中修改了目标函数中的log，替换成收益率
+        paper: Online Lazy Updates for Portfolio Selection with Transaction Costs
+        :param inputs: 算法的输入
+                x_t:    相对价格向量，size = 1 * stocks
+                w_o:    原来的组合权重，size = 1 * stocks
+        :return: w(t+1)
+        """
+        import cvxpy as cp
+
+        x_t = inputs['x_t']
+        r_t = x_t - 1
+        w_o = inputs['w_o']
+
+        m = len(w_o)  # 股票数
+
+        w = cp.Variable(m)
+
+        eta = 1
+        gamma = 0.0003
+        alpha = eta * gamma
+
+        obj_fun = cp.Minimize(- eta * w @ r_t + alpha * cp.norm(w - w_o, 1) + 0.5 * cp.norm(w - w_o) ** 2)
+
+        # 约束条件，包括等式约束和不等式约束
+        cons = [w >= 0,
+                w @ np.ones(m) == 1]
+
+        # 把目标函数与约束传进Problem函数中
+        prob = cp.Problem(obj_fun, cons)
+
+        # 问题求解
+        print(prob.is_dcp())
+        # print(config)
+        # prob.solve(verbose=True)
+        prob.solve()
+
+        print("status:", prob.status)
+        print(f"optimal value {prob.value}")
+        print(f"optimal variable, w={w.value}")
+
+        return w.value
+
 
     @staticmethod
     def olmar(inputs):
@@ -223,24 +292,41 @@ class ReferPO:
         return w
 
     @staticmethod
-    def eg(inputs):
-        # get inputs
-        eta = 0.05
-        x_t = inputs['x_t']
-        w_o = inputs['w_o']
-        if np.dot(w_o, x_t):
-            theta_t = x_t / np.dot(w_o, x_t)
-            w = w_o * np.exp(eta * theta_t)
-            return w
-        else:
-            return np.ones_like(w_o) / w_o.size
+    def sspo_cvxpy(inputs):
+        """
+        该函数使用cvxpy实现
+        paper: Short-term Sparse Portfolio Optimization Based on Alternating Direction Method of Multipliers
+        :param inputs: 算法输入
+                x_pred: 相对价格预测向量，size = 1 * stocks
+                w_o:    原来的组合权重，size = 1 * stocks
+        :return: w(t+1)
+        """
+        import cvxpy as cp
 
-    @staticmethod
-    def pamr(inputs):
-        # get inputs
-        eps = 0.5
-        x_t = inputs['x_t']
+        lam = 0.5
+
+        x_pred = inputs['x_pred']
         w_o = inputs['w_o']
-        tau = max(0.0, np.dot(w_o * x_t) - eps / np.linalg.norm(x_t - np.mean(x_t)))
-        w = w_o - tau * (x_t - np.mean(x_t))
-        return w
+
+        R_t = 1.1 * np.log(x_pred) + 1
+        m = len(w_o)  # 股票数
+
+        w = cp.Variable(m)
+
+        obj_fun = cp.Minimize(- w @ R_t + lam * cp.norm(w, 1))
+
+        # 约束条件，包括等式约束和不等式约束
+        cons = [w >= 0,
+                w @ np.ones(m) == 1]
+
+        # 把目标函数与约束传进Problem函数中
+        prob = cp.Problem(obj_fun, cons)
+
+        # 问题求解
+        print(prob.is_dcp())
+        prob.solve()
+
+        print("status:", prob.status)
+        print(f"optimal value {prob.value}")
+
+        return w.value
